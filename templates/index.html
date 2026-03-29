@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NIKE — Just Buy It</title>
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/index.css" />
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav>
+      <a class="nav-logo" href="#">NIK<span>E</span></a>
+      <ul class="nav-links">
+        <li><a href="#" class="active">Home</a></li>
+        <li><a href="#products">Collection</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="contact">Contact</a></li>
+      </ul>
+      <a href="/bucket" class="cart-link">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path
+            d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
+          />
+        </svg>
+        Cart <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+      <div class="nav-auth" id="nav-auth"></div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <p class="hero-tag">New Collection 2025</p>
+      <h1>Just <em>Do</em><br />It.</h1>
+      <p>
+        Engineered for performance. Built for the streets. Three colorways — one
+        iconic silhouette.
+      </p>
+      <a href="#products" class="btn">Shop Now</a>
+    </section>
+
+    <!-- MARQUEE STRIP -->
+    <div class="strip">
+      <div class="strip-track">
+        <span>Free Shipping <b>·</b></span>
+        <span>New Drop <b>·</b></span>
+        <span>Nike Air Max <b>·</b></span>
+        <span>Just Do It <b>·</b></span>
+        <span>Limited Stock <b>·</b></span>
+        <span>Free Returns <b>·</b></span>
+        <span>New Drop <b>·</b></span>
+        <span>Nike Air Max <b>·</b></span>
+        <span>Just Do It <b>·</b></span>
+        <span>Free Shipping <b>·</b></span>
+        <span>New Drop <b>·</b></span>
+        <span>Nike Air Max <b>·</b></span>
+        <span>Just Do It <b>·</b></span>
+        <span>Limited Stock <b>·</b></span>
+        <span>Free Returns <b>·</b></span>
+        <span>New Drop <b>·</b></span>
+        <span>Nike Air Max <b>·</b></span>
+        <span>Just Do It <b>·</b></span>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="section-title" id="products">
+      <h2>The Collection</h2>
+      <p>Pick your colorway. Own the court.</p>
+    </div>
+
+    {% set meta = { "black_nike": {"display": "Nike Air Max — Blackout", "slug":
+    "blackout", "category": "Air Max", "desc": "Stealth meets style. Full black
+    construction for a bold, minimal look that goes with everything.", "badge":
+    "Best Seller"}, "red_nike": {"display": "Nike Air Max — Crimson", "slug":
+    "crimson", "category": "Air Max", "desc": "Stand out from the crowd.
+    Signature red colorway inspired by the track and built for the streets.",
+    "badge": "New"}, "white_nike": {"display": "Nike Air Max — Cloud", "slug":
+    "cloud", "category": "Air Max", "desc": "Clean lines, pure white. A timeless
+    classic that pairs with any fit for any occasion.", "badge": ""} } %}
+
+    <div class="products">
+      {% for product in products %} {% set key = product.name %} {% set m =
+      meta.get(key, {"display": product.name, "slug": product.name, "category":
+      "Nike", "desc": "", "badge": ""}) %}
+      <div class="card">
+        <div class="card-img-wrap">
+          {% if m.badge %}<span class="badge">{{ m.badge }}</span>{% endif %}
+          <img
+            class="card-img"
+            src="/{{ product.path }}"
+            alt="{{ m.display }}"
+          />
+        </div>
+        <div class="card-body">
+          <p class="card-category">{{ m.category }}</p>
+          <p class="card-name">{{ m.display }}</p>
+          <p class="card-desc">{{ m.desc }}</p>
+          <div class="card-footer">
+            <span class="card-price">${{ product.price }}</span>
+            <button
+              class="card-btn"
+              data-id="{{ m.slug }}"
+              data-name="{{ m.display }}"
+              data-price="{{ product.price }}"
+              data-img="/{{ product.path }}"
+            >
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <span>© 2025 Nike, Inc. All rights reserved.</span>
+      <span
+        ><a href="#">Privacy</a> &nbsp;·&nbsp;
+        <a href="#">Terms</a> &nbsp;·&nbsp; <a href="#">Contact</a></span
+      >
+    </footer>
+
+    <script>
+      async function refreshBadge() {
+        try {
+          const res = await fetch("/api/cart");
+          const items = await res.json();
+          const count = items.reduce((s, i) => s + i.qty, 0);
+          document.getElementById("cart-badge").textContent = count;
+        } catch {}
+      }
+
+      document.querySelectorAll(".card-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const { id, name, price, img } = btn.dataset;
+          btn.disabled = true;
+          btn.textContent = "Adding…";
+          try {
+            await fetch("/api/cart", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                product_id: id,
+                product_name: name,
+                price: Number(price),
+                img,
+              }),
+            });
+            btn.textContent = "✓ Added";
+            btn.style.background = "#4ade80";
+            btn.style.color = "#0a0a0a";
+            await refreshBadge();
+          } catch {
+            btn.textContent = "Error";
+          }
+          setTimeout(() => {
+            btn.textContent = "Add to Cart";
+            btn.style.background = "";
+            btn.style.color = "";
+            btn.disabled = false;
+          }, 1500);
+        });
+      });
+
+      refreshBadge();
+    </script>
+
+    <script id="auth-nav-script">
+      (async () => {
+        const auth = document.getElementById("nav-auth");
+        if (!auth) return;
+        try {
+          const res = await fetch("/api/auth/me");
+          const data = await res.json();
+          if (res.ok) {
+            auth.innerHTML = `
+            <span class="nav-user">Hi, <span>${data.username}</span></span>
+            <button class="nav-btn logout" id="logout-btn">Logout</button>`;
+            document
+              .getElementById("logout-btn")
+              .addEventListener("click", async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.reload();
+              });
+            return;
+          }
+        } catch {}
+        auth.innerHTML = '<a class="nav-btn login" href="/login">Sign In</a>';
+      })();
+    </script>
+  </body>
+</html>
